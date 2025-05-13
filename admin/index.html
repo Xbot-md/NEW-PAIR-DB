@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XBOT MD || SESSION MANAGEMENT</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    /* === Slate-Blue Palette === */
+    :root {
+      --primary:   #3498db;
+      --secondary: #2980b9;
+      --dark-bg:   #1e272e;
+      --light-bg:  #f1f2f6;
+      --success:   #2ecc71;
+      --danger:    #e74c3c;
+      --warning:   #f1c40f;
+      --info:      #8e44ad;
+      --transition: all 0.3s ease;
+    }
+    * {
+      margin:0; padding:0; box-sizing:border-box;
+      font-family:'Poppins',sans-serif;
+      transition:var(--transition);
+    }
+    body {
+      background-color: var(--dark-bg);
+      color: var(--light-bg);
+      min-height:100vh;
+      overflow-x:hidden;
+      padding-top:70px;
+    }
+    body.dark-mode {
+      background-color: var(--light-bg);
+      color: var(--dark-bg);
+    }
+
+    /* Navbar */
+    .navbar {
+      position:fixed; top:0; left:0; width:100%;
+      background:rgba(10,15,26,0.8); backdrop-filter:blur(8px);
+      display:flex; justify-content:space-between; align-items:center;
+      padding:1rem 2rem; z-index:1000;
+      animation: fadeInDown 0.5s;
+    }
+    .navbar-logo {
+      display:flex; align-items:center;
+      color: var(--light-bg); font-size:1.25rem; font-weight:700;
+    }
+    .navbar-logo i { color: var(--primary); margin-right:0.5rem; }
+    .navbar-menu { display:flex; align-items:center; gap:1rem; }
+    .navbar-links { list-style:none; display:flex; gap:1rem; }
+    .navbar-links a {
+      color: var(--light-bg); text-decoration:none;
+      display:flex; align-items:center; gap:0.25rem;
+    }
+    .navbar-links a:hover, .navbar-links a.active { color: var(--primary); }
+    .navbar-toggle {
+      display:none; font-size:1.5rem; cursor:pointer;
+      color: var(--light-bg);
+    }
+    .theme-toggle, .logout-btn {
+      background:none; border:none; font-size:1.2rem;
+      cursor:pointer; color: var(--light-bg);
+      margin-left:0.5rem;
+    }
+
+    /* Drawer */
+    .drawer {
+      position:fixed; top:0; left:-250px; width:250px; height:100%;
+      background: var(--dark-bg); padding:2rem;
+      box-shadow:2px 0 15px rgba(0,0,0,0.5);
+      transition:var(--transition); z-index:1001;
+    }
+    .drawer.open { left:0; }
+    .drawer .close-drawer {
+      font-size:1.5rem; cursor:pointer; color:var(--light-bg);
+      margin-bottom:1.5rem;
+    }
+    .drawer h3 { margin-bottom:1rem; color: var(--primary); }
+    .drawer ul { list-style:none; }
+    .drawer ul li { margin-bottom:1rem; }
+    .drawer ul li a { color:var(--light-bg); text-decoration:none; display:flex; align-items:center; gap:0.5rem; }
+    .drawer .drawer-logout {
+      margin-top:2rem; padding-top:1rem;
+      border-top:1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Particles.js */
+    #particles-js {
+      position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown { from{opacity:0;transform:translateY(-20px);} to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeInUp   { from{opacity:0;transform:translateY(20px);}  to{opacity:1;transform:translateY(0);} }
+    @keyframes popIn { from{transform:scale(0.8);opacity:0;} to{transform:scale(1);opacity:1;} }
+
+    /* Auth Modal */
+    .auth-container {
+      display:flex; position:fixed; inset:0;
+      background:rgba(0,0,0,0.3);
+      justify-content:center; align-items:center;
+      z-index:900; animation: fadeInUp 0.5s;
+    }
+    .auth-box {
+      background:transparent; border:2px solid var(--primary);
+      padding:2rem; border-radius:8px; width:100%; max-width:360px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.5);
+      animation: fadeInUp 0.5s; position:relative;
+    }
+    .auth-box h2 {
+      text-align:center; margin-bottom:1rem;
+      color:var(--primary);
+    }
+    .auth-box .form-group { position:relative; margin-bottom:1rem; }
+    .auth-box .form-group label {
+      display:block; margin-bottom:0.25rem;
+      color: var(--light-bg);
+    }
+    .auth-box .form-group input {
+      width:100%; padding:0.75rem 2.5rem;
+      border-radius:5px; border:1px solid var(--primary);
+      background:rgba(255,255,255,0.1); color: var(--light-bg);
+    }
+    .auth-box .form-group i {
+      position:absolute; top:50%; left:0.75rem;
+      transform:translateY(-50%); color: var(--primary);
+    }
+    .auth-box .btn {
+      width:100%; padding:0.75rem; border:none;
+      border-radius:5px; background:var(--primary);
+      color: var(--dark-bg); font-weight:500; cursor:pointer;
+      animation: popIn 0.8s ease-out both; animation-delay:0.3s;
+    }
+    .auth-box .btn:hover { background: var(--secondary); }
+    .auth-box .pair-btn {
+      width:100%; padding:0.75rem; border:none;
+      border-radius:5px; background:var(--info);
+      color:#fff; font-weight:500; cursor:pointer;
+      margin-top:0.75rem;
+      animation: popIn 0.8s ease-out both; animation-delay:0.5s;
+    }
+    .auth-box .pair-btn:hover { transform: scale(1.02); }
+    .auth-box .theme-toggle {
+      position:absolute; top:1rem; right:1rem;
+    }
+
+    /* Dashboard */
+    .container { max-width:1200px; margin:0 auto; padding:1rem; }
+    .dashboard { display:none; animation: fadeInUp 0.5s; }
+    .stats {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:1rem; margin-bottom:1rem;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.05); padding:1rem;
+      border-radius:8px; text-align:center;
+      box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      animation: fadeInUp 0.5s;
+    }
+    .stat-card i { font-size:1.5rem; color: var(--primary); margin-bottom:0.5rem; }
+    .stat-card h3 { font-size:1.5rem; margin-bottom:0.25rem; }
+    .stat-card p { color: rgba(255,255,255,0.7); }
+
+    .search-bar {
+      display:flex; gap:0.5rem; margin-bottom:1rem;
+      animation: fadeInUp 0.5s;
+    }
+    .search-bar input {
+      flex:1; padding:0.5rem; border-radius:5px;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(0,0,0,0.2); color: var(--light-bg);
+    }
+    .search-bar button {
+      padding:0.5rem 1rem; background:var(--primary);
+      border:none; border-radius:5px; color: var(--dark-bg);
+      cursor:pointer;
+    }
+
+    .creds-table {
+      width:100%; border-collapse:collapse; margin-bottom:1rem;
+      animation: fadeInUp 0.5s;
+    }
+    .creds-table th,
+    .creds-table td {
+      padding:0.75rem; border-bottom:1px solid rgba(255,255,255,0.2);
+    }
+    .creds-table th {
+      background: rgba(255,255,255,0.1); color: var(--light-bg);
+    }
+    .creds-table td { color: var(--light-bg); }
+
+    /* Status badges & action buttons */
+    .status-badge {
+      padding:0.25rem 0.5rem; border-radius:10px;
+      font-size:0.75rem; color:#fff; display:inline-block;
+    }
+    .status-valid { background: var(--success); }
+    .status-invalid { background: var(--danger); }
+
+    .action-btn {
+      padding:0.25rem 0.5rem; margin:0 0.25rem;
+      border:none; border-radius:4px; cursor:pointer;
+      color:#fff; transition:var(--transition);
+    }
+    .view-btn { background: var(--info); }
+    .edit-btn { background: var(--warning); color: var(--dark-bg); }
+    .delete-btn { background: var(--danger); }
+    .action-btn:hover { transform:translateY(-2px); opacity:0.9; }
+
+    /* Modals */
+    .modal {
+      display:none; position:fixed; inset:0;
+      background:rgba(0,0,0,0.7); justify-content:center;
+      align-items:center; z-index:900; animation: fadeInUp 0.5s;
+    }
+    .modal-content {
+      background: var(--light-bg); padding:1.5rem;
+      border-radius:8px; width:90%; max-width:800px;
+      max-height:80vh; overflow-y:auto;
+      box-shadow:0 8px 20px rgba(0,0,0,0.5);
+    }
+    body.dark-mode .modal-content { background: var(--dark-bg); }
+    .modal-header {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:1rem;
+    }
+    .modal-header h2 { color: var(--primary); }
+    .close-btn {
+      background:none; border:none; font-size:1.25rem;
+      color: var(--dark-bg); cursor:pointer;
+    }
+    body.dark-mode .close-btn { color: var(--light-bg); }
+
+    /* Toast */
+    .toast {
+      position:fixed; bottom:1rem; right:1rem;
+      background: var(--success); color:#fff;
+      padding:0.75rem 1rem; border-radius:5px;
+      box-shadow:0 4px 15px rgba(0,0,0,0.3);
+      display:none; animation: fadeInUp 0.5s;
+    }
+
+    @media (max-width:768px) {
+      .navbar-menu { display:none; }
+      .navbar-toggle { display:block; }
+      .stats { grid-template-columns:1fr; }
+      .creds-table { display:block; overflow-x:auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particles.js background -->
+  <div id="particles-js"></div>
+
+  <!-- Notifications Drawer -->
+  <div class="drawer" id="drawer">
+    <span class="close-drawer" id="closeDrawer"><i class="fas fa-times"></i></span>
+    <h3>Notifications</h3>
+    <ul id="notificationsList"><li>No new notifications</li></ul>
+    <div class="drawer-logout">
+      <a href="#" id="drawerLogout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+  </div>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-logo"><i class="fas fa-key"></i>Xbot Sessions Dashboard</div>
+    <i class="fas fa-bars navbar-toggle" id="openDrawer"></i>
+    <div class="navbar-menu">
+      <ul class="navbar-links">
+        <li><a href="#"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="#"><i class="fas fa-chart-line"></i> Analytics</a></li>
+        <li class="dropdown">
+          <a href="#"><i class="fas fa-cog"></i> Settings <i class="fas fa-caret-down"></i></a>
+          <div class="dropdown-content">
+            <a href="#"><i class="fas fa-user"></i> Profile</a>
+            <a href="#"><i class="fas fa-bell"></i> Notifications</a>
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          </div>
+        </li>
+      </ul>
+      <button class="theme-toggle" id="themeToggle"><i class="fas fa-moon"></i></button>
+      <button id="logoutBtnNav" class="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </nav>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div class="auth-container" id="authContainer">
+    <div class="auth-box">
+      <h2><i class="fas fa-user-shield"></i> Admin Login</h2>
+      <button class="theme-toggle" id="loginThemeToggle"><i class="fas fa-moon"></i></button>
+      <form id="loginForm">
+        <div class="form-group">
+          <i class="fas fa-user"></i>
+          <label for="username">Username</label>
+          <input type="text" id="username" required>
+        </div>
+        <div class="form-group">
+          <i class="fas fa-lock"></i>
+          <label for="password">Password</label>
+          <input type="password" id="password" required>
+        </div>
+        <button type="submit" class="btn">Login</button>
+      </form>
+      <button class="pair-btn" onclick="window.location='GGGGG'">
+        Are you lost? Click here to go to pair site
+      </button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="container">
+    <div class="dashboard" id="dashboard">
+      <div class="stats">
+        <div class="stat-card">
+          <i class="fas fa-database"></i>
+          <h3 id="totalCreds">0</h3>
+          <p>Total Sessions</p>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-file"></i>
+          <h3 id="recentCreds">0</h3>
+          <p>Recent Sessions (24h)</p>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-check-circle"></i>
+          <h3 id="validCreds">0</h3>
+          <p>Valid Sessions</p>
+        </div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by ID, Name or Number...">
+        <button id="searchBtn" class="btn">Search</button>
+      </div>
+      <table class="creds-table">
+        <thead>
+          <tr><th>Session Id</th><th>Wa Number</th><th>Name</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="credsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- VIEW MODAL -->
+  <div class="modal" id="viewModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Credentials Details</h2>
+        <button class="close-btn" id="closeViewModal">&times;</button>
+      </div>
+      <div class="json-viewer" id="jsonViewer"></div>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div class="modal" id="editModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Credentials</h2>
+        <button class="close-btn" id="closeEditModal">&times;</button>
+      </div>
+      <div class="form-group">
+        <label for="editCredsId">Session ID</label>
+        <input type="text" id="editCredsId" disabled>
+      </div>
+      <div class="form-group">
+        <label for="editCredsData">Credentials Data (JSON)</label>
+        <textarea id="editCredsData" rows="10" style="width:100%; font-family:monospace;"></textarea>
+      </div>
+      <button class="btn" id="saveEditBtn">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script>
+    // Particles.js – small blue network
+    particlesJS("particles-js", {
+      particles: {
+        number: { value:20, density:{ enable:true, value_area:800 }},
+        color: { value:"#3498db" },
+        shape: { type:"circle" },
+        opacity: { value:0.5 },
+        size: { value:1 },
+        line_linked: { enable:true, distance:150, color:"#3498db", opacity:0.4, width:1 },
+        move: { enable:true, speed:0.5, out_mode:"out" }
+      },
+      interactivity: {
+        events: { onhover:{ enable:true, mode:"grab" }, onclick:{ enable:true, mode:"push" }},
+        modes: { grab:{ distance:200, line_linked:{ opacity:0.6 }}, push:{ particles_nb:2 }}
+      },
+      retina_detect:true
+    });
+
+    // Drawer toggles
+    const drawer = document.getElementById('drawer');
+    document.getElementById('openDrawer').addEventListener('click', ()=> drawer.classList.add('open'));
+    document.getElementById('closeDrawer').addEventListener('click', ()=> drawer.classList.remove('open'));
+
+    // DOM References
+    const authContainer    = document.getElementById('authContainer');
+    const loginForm        = document.getElementById('loginForm');
+    const dashboard        = document.getElementById('dashboard');
+    const themeToggle      = document.getElementById('themeToggle');
+    const loginThemeToggle = document.getElementById('loginThemeToggle');
+    const logoutBtnNav     = document.getElementById('logoutBtnNav');
+    const logoutBtn        = document.getElementById('logoutBtn');
+    const drawerLogout     = document.getElementById('drawerLogout');
+    const searchInput      = document.getElementById('searchInput');
+    const searchBtn        = document.getElementById('searchBtn');
+    const credsTableBody   = document.getElementById('credsTableBody');
+    const viewModal        = document.getElementById('viewModal');
+    const closeViewModal   = document.getElementById('closeViewModal');
+    const jsonViewer       = document.getElementById('jsonViewer');
+    const editModal        = document.getElementById('editModal');
+    const closeEditModal   = document.getElementById('closeEditModal');
+    const editCredsId      = document.getElementById('editCredsId');
+    const editCredsData    = document.getElementById('editCredsData');
+    const saveEditBtn      = document.getElementById('saveEditBtn');
+    const toast            = document.getElementById('toast');
+    const totalCreds       = document.getElementById('totalCreds');
+    const recentCreds      = document.getElementById('recentCreds');
+    const validCreds       = document.getElementById('validCreds');
+    let currentEditingId   = null;
+
+    // Initial state
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    if (isAuth) {
+      authContainer.style.display = 'none';
+      dashboard.style.display     = 'block';
+      fetchCreds();
+    } else {
+      authContainer.style.display = 'flex';
+      dashboard.style.display     = 'none';
+    }
+
+    // Theme toggle sync
+    function syncTheme(dark) {
+      const icon = dark ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      themeToggle.innerHTML = icon;
+      loginThemeToggle.innerHTML = icon;
+    }
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const dark = document.body.classList.contains('dark-mode');
+      localStorage.setItem('darkMode', dark);
+      syncTheme(dark);
+    });
+    loginThemeToggle.addEventListener('click', () => themeToggle.click());
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+      syncTheme(true);
+    }
+
+    // Logout handler
+    function handleLogout(e) {
+      e.preventDefault();
+      fetch('/api/logout', {
+        method: 'POST',
+        headers: { 'Authorization': 'Basic ' + localStorage.getItem('authToken') }
+      })
+      .then(res => {
+        if (res.ok) {
+          localStorage.clear();
+          location.reload();
+        } else {
+          showToast('Logout failed','error');
+        }
+      })
+      .catch(() => showToast('Logout error','error'));
+    }
+    logoutBtn.addEventListener('click', handleLogout);
+    logoutBtnNav.addEventListener('click', handleLogout);
+    drawerLogout.addEventListener('click', handleLogout);
+
+    // Login
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      try {
+        const res = await fetch('/admin/login.php', {
+          method:'POST',
+          headers:{ 'Authorization':'Basic '+btoa(username+':'+password) }
+        });
+        if (res.ok) {
+          localStorage.setItem('authToken', btoa(username+':'+password));
+          localStorage.setItem('isAuthenticated','true');
+          authContainer.style.display='none';
+          dashboard.style.display='block';
+          fetchCreds();
+          showToast('Login successful!');
+        } else {
+          showToast('Invalid credentials','error');
+        }
+      } catch {
+        showToast('Error connecting to server','error');
+      }
+    });
+
+    // Fetch credentials
+    async function fetchCreds(){
+      try {
+        const res = await fetch('/admin/creds.php', {
+          headers:{ 'Authorization':'Basic '+localStorage.getItem('authToken') }
+        });
+        const creds = await res.json();
+        renderCredsTable(creds);
+        updateStats(creds);
+      } catch {
+        showToast('Error fetching credentials','error');
+      }
+    }
+
+    // Search
+    searchBtn.addEventListener('click', async () => {
+      const q = searchInput.value.trim();
+      if (q) {
+        try {
+          const res = await fetch(`/admin/creds.php/search.php?q=${encodeURIComponent(q)}`, {
+            headers:{ 'Authorization':'Basic '+localStorage.getItem('authToken') }
+          });
+          renderCredsTable(await res.json());
+        } catch {
+          showToast('Error searching credentials','error');
+        }
+      } else fetchCreds();
+    });
+    searchInput.addEventListener('keypress', e => { if (e.key==='Enter') searchBtn.click(); });
+
+    // Render table
+    function renderCredsTable(creds){
+      credsTableBody.innerHTML = '';
+      if (creds.length === 0) {
+        credsTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center">No credentials found</td></tr>';
+        return;
+      }
+      creds.forEach(c => {
+        const date = new Date(c.createdAt).toLocaleString();
+        const waNumber = c.credsData?.me?.id?.split(':')[0]||'N/A';
+        const name = c.credsData?.me?.name||'N/A';
+        const valid = !!c.credsData?.myAppStateKeyId && !!c.credsData?.me;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.credsId}</td>
+          <td>${waNumber}</td>
+          <td>${name}</td>
+          <td><span class="status-badge ${valid?'status-valid':'status-invalid'}">${valid?'Valid':'Invalid'}</span></td>
+          <td>${date}</td>
+          <td>
+            <button class="action-btn view-btn" data-id="${c.credsId}"><i class="fas fa-eye"></i></button>
+            <button class="action-btn edit-btn" data-id="${c.credsId}"><i class="fas fa-edit"></i></button>
+            <button class="action-btn delete-btn" data-id="${c._id}"><i class="fas fa-trash"></i></button>
+          </td>`;
+        credsTableBody.appendChild(tr);
+      });
+      document.querySelectorAll('.view-btn').forEach(b=>b.addEventListener('click', ()=>viewCreds(b.dataset.id)));
+      document.querySelectorAll('.edit-btn').forEach(b=>b.addEventListener('click', ()=>editCreds(b.dataset.id)));
+      document.querySelectorAll('.delete-btn').forEach(b=>b.addEventListener('click', ()=>deleteCreds(b.dataset.id)));
+    }
+
+    // View
+    async function viewCreds(id){
+      try {
+        const res = await fetch(`/admin/creds.php/${id}`, {
+          headers:{ 'Authorization':'Basic '+localStorage.getItem('authToken') }
+        });
+        const data = await res.json();
+        jsonViewer.textContent = JSON.stringify(data.credsData,null,2);
+        viewModal.style.display = 'flex';
+      } catch {
+        showToast('Error viewing credentials','error');
+      }
+    }
+    closeViewModal.addEventListener('click', ()=>viewModal.style.display='none');
+
+    // Edit
+    async function editCreds(id){
+      try {
+        const res = await fetch(`/admin/creds.php/${id}`, {
+          headers:{ 'Authorization':'Basic '+localStorage.getItem('authToken') }
+        });
+        const data = await res.json();
+        currentEditingId = id;
+        editCredsId.value = data.credsId;
+        editCredsData.value = JSON.stringify(data.credsData,null,2);
+        editModal.style.display = 'flex';
+      } catch {
+        showToast('Error loading for edit','error');
+      }
+    }
+    closeEditModal.addEventListener('click', ()=>{
+      editModal.style.display='none';
+      currentEditingId=null;
+    });
+
+    // Save edit
+    saveEditBtn.addEventListener('click', async ()=>{
+      try {
+        const newData = JSON.parse(editCredsData.value);
+        const res = await fetch(`/admin/creds.php/${currentEditingId}`, {
+          method:'PUT',
+          headers:{
+            'Content-Type':'application/json',
+            'Authorization':'Basic '+localStorage.getItem('authToken')
+          },
+          body: JSON.stringify({ credsData:newData })
+        });
+        if (res.ok) {
+          showToast('Credentials updated');
+          editModal.style.display='none';
+          fetchCreds();
+        } else {
+          showToast('Error updating','error');
+        }
+      } catch {
+        showToast('Invalid JSON','error');
+      }
+    });
+
+    // Delete
+    async function deleteCreds(id){
+      if (!confirm('Are you sure?')) return;
+      try {
+        const res = await fetch(`/admin/creds.php/${id}`, {
+          method:'DELETE',
+          headers:{ 'Authorization':'Basic '+localStorage.getItem('authToken') }
+        });
+        if (res.ok) {
+          showToast('Deleted');
+          fetchCreds();
+        } else {
+          showToast('Error deleting','error');
+        }
+      } catch {
+        showToast('Error deleting','error');
+      }
+    }
+
+    // Stats
+    function updateStats(creds){
+      totalCreds.textContent = creds.length;
+      const now = Date.now();
+      recentCreds.textContent = creds.filter(c => now - new Date(c.createdAt) < 86400000).length;
+      validCreds.textContent = creds.filter(c => c.credsData?.myAppStateKeyId && c.credsData?.me).length;
+    }
+
+    // Toast
+    function showToast(msg,type='success'){
+      toast.textContent = msg;
+      toast.style.background = type==='error'? 'var(--danger)' : 'var(--success)';
+      toast.style.display = 'block';
+      setTimeout(()=>toast.style.display='none',3000);
+    }
+  </script>
+</body>
+</html>
