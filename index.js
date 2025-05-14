@@ -17,8 +17,8 @@ const ALLOWED_API_KEYS = [
 ];
 
 const ADMIN_CREDENTIALS = {
-  username: 'davex',
-  password: 'dave001',
+  username: 'davidx',
+  password: 'davidx001',
 };
 
 app.use(cors());
