@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     rm -rf /var/lib/apt/lists/*
 USER node
-RUN git clone https://github.com/Mek-d1/NEW-PAIR-DB.git /home/node/NEW-PAIR-DB
+RUN git clone https://github.com/Xbot-md/NEW-PAIR-DB.git /home/node/NEW-PAIR-DB
 WORKDIR /home/node/NEW-PAIR-DB
 RUN chmod -R 777 /home/node/NEW-PAIR-DB/
 RUN yarn install --network-concurrency 1
