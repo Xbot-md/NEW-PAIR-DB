@@ -1,6 +1,7 @@
 {
   "name": "session-backened",
   "version": "1.0.0",
+  "license": "GPL-3.0 license",
   "description": "API for Storing WhatsApp Sessions",
   "main": "index.js",
   "scripts": {
